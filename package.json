@@ -1,0 +1,17 @@
+{ 
+	"name" : "lastmodified",
+	"description": "Check for file modifications",
+	"version": "0.0.1",
+	"author": {
+		"name": "Paul LeMarquand",
+		"email": "plemarquand@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/plemarquand/modified.git"
+	},
+	"main": "./lastmodified.js",
+	"devDependencies": {
+		"vows": "*"
+	}
+}
