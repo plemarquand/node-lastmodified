@@ -10,6 +10,9 @@
 		"type": "git",
 		"url": "git://github.com/plemarquand/modified.git"
 	},
+	"engines": {
+		"node": ">0.8.9"
+	},
 	"main": "./lastmodified.js",
 	"devDependencies": {
 		"vows": "*"
