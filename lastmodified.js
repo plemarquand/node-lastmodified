@@ -188,9 +188,7 @@ module.exports = function(basePath, id, saveOnExit) {
 	  */
 	 api.serialize = function(callback) {
 	 	getLookup(function(err, lookup) {
-			fs.writeFile(dbFile, JSON.stringify(lookup), function(err) {
-				callback(err);
-			});
+			fs.writeFile(dbFile, JSON.stringify(lookup), callback);
 		});
 	 }
 
