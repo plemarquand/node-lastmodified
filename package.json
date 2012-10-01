@@ -1,7 +1,7 @@
 { 
 	"name" : "lastmodified",
 	"description": "Check for file modifications",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"author": {
 		"name": "Paul LeMarquand",
 		"email": "plemarquand@gmail.com"

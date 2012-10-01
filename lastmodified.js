@@ -23,7 +23,7 @@ module.exports = function(basePath, id, saveOnExit) {
 				if(err.errno == 34) callback(null, {});
 				else callback(err);
 			}
-			else callback(null, JSON.parse(result));
+			else callback(null, (result) ? (JSON.parse(result)) : {});
 		});
 	};
 
@@ -51,6 +51,41 @@ module.exports = function(basePath, id, saveOnExit) {
 		}
 	}
 
+	var wasFileModifiedSince = function(file, lookup, callback) {
+		var filepath = path.join(basePath, file);
+		var mtime = lookup[filepath];
+		fs.stat(filepath, function(err, stats) {
+			if(err) callback(err);
+			else {
+				var now = stats.mtime.getTime();
+				var wasModified = now > mtime;
+				lookup[filepath] = now
+				callback(null, wasModified);
+			}
+		});
+	}
+
+	var fileExists = function(file, callback) {
+		var filepath = path.join(basePath, file);
+		fs.exists(filepath, function(exists) {
+			if(exists) {
+				callback(null);
+			} else {
+				callback(new Error(filepath + " does not exist."));
+			}
+		});
+	}
+
+	var fileHasBeenCheckedFor = function(file, lookup) {
+		var filepath = path.join(basePath, file);
+		if(lookup.hasOwnProperty(filepath) === false) {
+			lookup[filepath] = new Date().getTime();
+			return false;
+		} else {
+			return true;
+		}
+	}
+
 	/**
 	 * Sets the base path that is used to determine the absolute path of
 	 * the files passed in for checking
@@ -63,13 +98,17 @@ module.exports = function(basePath, id, saveOnExit) {
 	 * Given a list of files, determines which of those files have been
 	 * modified since the last time they were checked.
 	 */
-	api.filter = function(files, callback) {
+	api.filter = function(files, mtime, callback) {
+		if(typeof mtime == 'function') {
+			callback = mtime;
+			mtime = new Date().getTime();
+		}
 
 		var ctr = 0;
 		var result = [];
 		var exited = false;
 		files.forEach(function(file){
-			api.sinceLastCall(file, function(err, wasModified) {
+			api.since(file, mtime, function(err, wasModified) {
 				if(exited) return;
 				if(err) {
 					exited = true;
@@ -86,50 +125,24 @@ module.exports = function(basePath, id, saveOnExit) {
 	};
 
 	/**
-	 * Callback returns true the file has changed since
-	 * the last time this method was called.
-	 */
-	api.sinceLastCall = function(file, callback) {
-		var filepath = path.join(basePath, file);
-
-		fs.exists(filepath, function(exists) {
-			if(exists) {
-				getLookup(function(err, lookup) {
-					// File has never been checked before, so yep.
-					if(lookup.hasOwnProperty(filepath) === false) {
-						lookup[filepath] = new Date().getTime();
-						callback(null, true);
-					} else {
-						api.since(file, lookup[filepath], callback);
-					}
-				});
-			} else {
-				callback(new Error(filepath + " does not exist."));
-			}
-		});
-	}
-
-	/**
 	 * Callback returns true if the file has changed since the specified time.
+	 * If no time is specified, the current time is used.
 	 */
 	api.since = function(file, mtime, callback) {
-		var filepath = path.join(basePath, file);
-		fs.exists(filepath, function(exists) {
-			if(exists) {
-				fs.stat(filepath, function(err, stats) {
-					if(err) callback(err);
-					else {
-						getLookup(function(err, lookup) {
-							var now = stats.mtime.getTime();
-							var wasModified = now > mtime;
-							lookup[filepath] = now
-							callback(null, wasModified);
-						})
-					}
-				});
-			} else {
-				callback(new Error("File does not exist."));
-			}
+		if(typeof mtime == 'function') {
+			callback = mtime;
+			mtime = new Date().getTime();
+		}
+
+		getLookup(function(err, lookup) {
+			fileExists(file, function(err) {
+				if(err) callback(err);
+				else if(fileHasBeenCheckedFor(file, lookup)) {
+					wasFileModifiedSince(file, mtime, callback);
+				} else {
+					callback(err, true);
+				}
+			});
 		});
 	};
 
@@ -175,7 +188,9 @@ module.exports = function(basePath, id, saveOnExit) {
 	  */
 	 api.serialize = function(callback) {
 	 	getLookup(function(err, lookup) {
-			fs.writeFile(dbFile, JSON.stringify(lookup), callback);
+			fs.writeFile(dbFile, JSON.stringify(lookup), function(err) {
+				callback(err);
+			});
 		});
 	 }
 

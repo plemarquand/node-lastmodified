@@ -9,10 +9,6 @@ var modified = function(id) {
 	return require('../lastmodified')(path.resolve(__dirname,'./'), id || "tester", false);
 }
 
-process.on('exit', function() {
-	//fs.unlinkSync(path.resolve(__dirname,'../tester.json'));
-});
-
 suite.addBatch({
 	
 	'A never before requested file': {
@@ -27,11 +23,12 @@ suite.addBatch({
 				var m = modified();
 				var cb = this.callback;
 				m.purgeAll(function(err) {
-					m.sinceLastCall("test.txt", cb);
+					m.since("test.txt", cb);
 				});
 			}
 		}
 	},
+	
 	'A non existant file': {
 		'should not be modified': {
 			'and respond with false': function(err, wasModified) {
@@ -42,7 +39,7 @@ suite.addBatch({
 			},
 			topic: function() {
 				var m = modified();
-				m.sinceLastCall("test" + new Date().getTime().toString() + ".txt", this.callback);
+				m.since("test" + new Date().getTime().toString() + ".txt", this.callback);
 			}
 		}
 	},
@@ -60,7 +57,7 @@ suite.addBatch({
 				var cb = this.callback;
 				fs.writeFileSync(path.resolve(__dirname, filename), "hallo");
 				m.purgeAll(function(err) {
-					m.sinceLastCall(filename, cb);
+					m.since(filename, cb);
 				});
 			}
 		},
@@ -77,8 +74,8 @@ suite.addBatch({
 				var cb = this.callback;
 				fs.writeFileSync(path.resolve(__dirname, filename), "hallo");
 				m.purgeAll(function(err) {
-					m.sinceLastCall(filename, function(err, wasModified) {
-						m.sinceLastCall(filename, cb);
+					m.since(filename, function(err, wasModified) {
+						m.since(filename, cb);
 					});
 				});
 			}
@@ -151,7 +148,7 @@ suite.addBatch({
 				var cb = this.callback;
 
 				m.purgeAll(function(err) {
-					m.sinceLastCall("test2.txt", function(err, result){
+					m.since("test2.txt", function(err, result){
 						m.filter(files, cb);
 					})
 				});
