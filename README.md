@@ -32,7 +32,7 @@ Checks persist across application executions, so even if you check if a file has
 Filtering a list of files, returning only the modified ones.
 
 ```js
-modified.filter(["foo.js", "bar.js", "baz.js", function(err, modifiedFiles){
+modified.filter(["foo.js", "bar.js", "baz.js"], function(err, modifiedFiles){
   modifiedFiles.forEach(file) { 
     // perform a task on the changed file.
   }
